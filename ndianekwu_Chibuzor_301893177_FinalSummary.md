@@ -4,7 +4,7 @@
 
 ## Case study
 
-My case study is Event Ticketing Platform. I designed the database for customers browsing events and placing ticket orders and event staff reviewing ticket sales, with separate tables named venue, event, ticket_order and ticket. It supports these operations: create venues and schedule events; place orders and issue tickets; find events by venue and start time; summarize issued tickets and revenue by event.
+My case study is the Event Ticketing Platform. I designed the database for customers browsing events and placing ticket orders and event staff reviewing ticket sales, with separate tables named venue, event, ticket_order and ticket. It supports these operations: create venues and schedule events; place orders and issue tickets; find events by venue and start time; summarize issued tickets and revenue by event.
 
 ## Portfolio 1: Database Design and Modelling
 
