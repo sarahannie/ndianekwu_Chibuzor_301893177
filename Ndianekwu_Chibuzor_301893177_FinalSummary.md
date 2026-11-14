@@ -14,6 +14,8 @@ Five PostgreSQL tables in third normal form: customer, venue, event, ticket_orde
 
 ![ER diagram](images/Ndianekwu_Chibuzor_301893177_ERDiagram.png)
 
+Figure 1. Entity-relationship diagram.
+
 ## Portfolio 2: Query Processing and Optimisation
 
 Four queries cover the stated operations: events by venue and date, revenue per event, a customer's order history (five-table join), and events at least half sold. Each was run with EXPLAIN (ANALYZE, BUFFERS). For the index test, 60,000 tickets were added and the "sales for one event" lookup was measured three times each way.
@@ -46,7 +48,18 @@ Discussion option. The proposal is a three-member MongoDB replica set across thr
 
 ## Evidence
 
-Each portfolio folder holds the scripts, a README and an evidence folder with the unedited script output.
+Each portfolio folder holds the scripts, a README, the unedited psql output (PostgreSQL 16) and screenshots from Neon (PostgreSQL 18.7) and MongoDB Atlas. Four of them:
+
+<p>
+<img src="portfolio-2-query-optimisation/screenshots/Ndianekwu_Chibuzor_301893177_P2_02_Plan_BeforeIndex_SeqScan_Neon.jpg" width="49%" alt="Plan before index: Seq Scan">
+<img src="portfolio-2-query-optimisation/screenshots/Ndianekwu_Chibuzor_301893177_P2_03_Plan_AfterIndex_BitmapScan_Neon.jpg" width="49%" alt="Plan after index: Bitmap Index Scan">
+</p>
+<p>
+<img src="portfolio-3-transactions-concurrency/screenshots/Ndianekwu_Chibuzor_301893177_P3_01_FailedTransaction_Neon.jpg" width="49%" alt="Failed transaction, rollback required">
+<img src="portfolio-4-nosql/screenshots/Ndianekwu_Chibuzor_301893177_P4_06_Explain_AfterIndex_IXSCAN.jpg" width="49%" alt="MongoDB explain after index: IXSCAN">
+</p>
+
+Figure 2. Top: the same lookup before and after the index (Neon). Bottom left: an order with an already sold seat fails and must be rolled back (Neon). Bottom right: MongoDB uses the compound index (Atlas).
 
 ## Individual reflection
 
@@ -56,7 +69,7 @@ In the first concurrency test both buyers were given the last ticket, so the eve
 
 The index test worked like looking for my own name in a phone book. Without an index the pages are in no order, so every page has to be read: PostgreSQL read all 60,046 tickets to find 200 and threw away 59,846, which took 7.083 ms on Neon. With the index there is an ordered list that points to the right pages, so it went straight to the 200 rows in 0.371 ms. That is why I will rely on indexes for the lookups my product runs most often. The test also showed two limits. An index is not always used: when a query wanted almost all the rows, PostgreSQL ignored it because reading everything was cheaper. And an index is not free: it takes storage, and every new ticket must also be added to it.
 
-[CHALLENGES: one or two sentences from Sarah on the hardest part of the assignment.]
+The hardest part came first: choosing the project. The brief listed several case studies, but none of them resonated with me, so I had to think about which real scenario would still be useful to me after the course. That led me to event ticketing, because of ModelClic. The second challenge was the database itself. I am used to MongoDB, so Portfolio 4 was familiar, but this was my first time using PostgreSQL or any SQL language. The course material explains the ideas, but doing it for real is different, and I also had to find a tool I could run PostgreSQL on easily; I settled on Neon because it works in the browser. Doing these things for the first time, and comparing how the relational and document databases behave, was where most of my effort went.
 
 ## AI-use declaration
 
