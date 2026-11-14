@@ -1,0 +1,109 @@
+SET
+=== Q1. Events at one venue inside a date window (find events by venue and start time)
+ event_id |     title      |       starts_at        |  status   
+----------+----------------+------------------------+-----------
+      202 | Afrobeats Live | 2026-12-20 18:00:00+01 | scheduled
+(1 row)
+
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using idx_event_venue_start on event e  (cost=0.15..8.17 rows=1 width=80) (actual time=0.006..0.007 rows=1 loops=1)
+   Index Cond: ((venue_id = 101) AND (starts_at >= '2026-12-01 00:00:00+01'::timestamp with time zone) AND (starts_at < '2027-01-01 00:00:00+01'::timestamp with time zone))
+   Buffers: shared hit=2
+ Planning Time: 0.023 ms
+ Execution Time: 0.012 ms
+(5 rows)
+
+=== Q2. Issued tickets and revenue per event (cancelled tickets do not count)
+ event_id |          title           | tickets_sold | revenue_naira 
+----------+--------------------------+--------------+---------------
+      202 | Afrobeats Live           |           13 |     325000.00
+      206 | Independence Concert     |            8 |     144000.00
+      200 | Lagos Jazz Night         |            6 |      90000.00
+      203 | Garden City Comedy Show  |            6 |      72000.00
+      204 | Acoustic Rooftop Session |            2 |      40000.00
+      205 | Data Careers Workshop    |            4 |      30000.00
+      201 | Tech Founders Meetup     |            3 |      15000.00
+      207 | Harmattan Food Fair      |            0 |             0
+(8 rows)
+
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=82.33..84.03 rows=680 width=80) (actual time=0.042..0.043 rows=8 loops=1)
+   Sort Key: (COALESCE(sum(t.price), '0'::numeric)) DESC, e.event_id
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=2
+   ->  HashAggregate  (cost=41.84..50.34 rows=680 width=80) (actual time=0.035..0.038 rows=8 loops=1)
+         Group Key: e.event_id
+         Batches: 1  Memory Usage: 49kB
+         Buffers: shared hit=2
+         ->  Hash Left Join  (cost=17.32..36.73 rows=680 width=64) (actual time=0.021..0.026 rows=43 loops=1)
+               Hash Cond: (e.event_id = t.event_id)
+               Buffers: shared hit=2
+               ->  Seq Scan on event e  (cost=0.00..16.80 rows=680 width=40) (actual time=0.001..0.002 rows=8 loops=1)
+                     Buffers: shared hit=1
+               ->  Hash  (cost=17.25..17.25 rows=6 width=32) (actual time=0.013..0.014 rows=42 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on ticket t  (cost=0.00..17.25 rows=6 width=32) (actual time=0.002..0.007 rows=42 loops=1)
+                           Filter: (status = ANY ('{issued,used}'::text[]))
+                           Rows Removed by Filter: 4
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=2
+ Planning Time: 0.064 ms
+ Execution Time: 0.065 ms
+(24 rows)
+
+=== Q3. Order history for one customer (four-table join)
+   full_name    | order_id |       placed_at        | payment_status |      title       |    venue     | seat_label |  price   
+----------------+----------+------------------------+----------------+------------------+--------------+------------+----------
+ Adaeze Okonkwo |      300 | 2026-11-01 09:00:00+01 | paid           | Lagos Jazz Night | Harbour Hall | A1         | 15000.00
+ Adaeze Okonkwo |      300 | 2026-11-01 09:00:00+01 | paid           | Lagos Jazz Night | Harbour Hall | A2         | 15000.00
+ Adaeze Okonkwo |      312 | 2026-11-13 11:24:00+01 | paid           | Afrobeats Live   | Garden Arena |            | 25000.00
+ Adaeze Okonkwo |      312 | 2026-11-13 11:24:00+01 | paid           | Afrobeats Live   | Garden Arena |            | 25000.00
+(4 rows)
+
+                                                                           QUERY PLAN                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=21.94..21.95 rows=1 width=200) (actual time=0.023..0.025 rows=4 loops=1)
+   Sort Key: o.placed_at, t.ticket_id
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=24
+   ->  Nested Loop  (cost=4.79..21.93 rows=1 width=200) (actual time=0.013..0.020 rows=4 loops=1)
+         Buffers: shared hit=24
+         ->  Nested Loop  (cost=4.64..21.69 rows=1 width=176) (actual time=0.010..0.016 rows=4 loops=1)
+               Buffers: shared hit=16
+               ->  Nested Loop  (cost=4.49..21.44 rows=1 width=144) (actual time=0.008..0.012 rows=4 loops=1)
+                     Buffers: shared hit=8
+                     ->  Nested Loop  (cost=4.34..20.88 rows=2 width=80) (actual time=0.006..0.007 rows=2 loops=1)
+                           Buffers: shared hit=4
+                           ->  Index Scan using customer_email_unique on customer c  (cost=0.15..8.17 rows=1 width=40) (actual time=0.003..0.003 rows=1 loops=1)
+                                 Index Cond: (email = 'adaeze.okonkwo@example.test'::text)
+                                 Buffers: shared hit=2
+                           ->  Bitmap Heap Scan on ticket_order o  (cost=4.19..12.66 rows=5 width=56) (actual time=0.002..0.003 rows=2 loops=1)
+                                 Recheck Cond: (c.customer_id = customer_id)
+                                 Heap Blocks: exact=1
+                                 Buffers: shared hit=2
+                                 ->  Bitmap Index Scan on idx_order_customer  (cost=0.00..4.19 rows=5 width=0) (actual time=0.001..0.001 rows=2 loops=1)
+                                       Index Cond: (customer_id = c.customer_id)
+                                       Buffers: shared hit=1
+                     ->  Index Scan using idx_ticket_order on ticket t  (cost=0.15..0.25 rows=3 width=72) (actual time=0.001..0.002 rows=2 loops=2)
+                           Index Cond: (order_id = o.order_id)
+                           Buffers: shared hit=4
+               ->  Index Scan using event_pkey on event e  (cost=0.15..0.25 rows=1 width=48) (actual time=0.001..0.001 rows=1 loops=4)
+                     Index Cond: (event_id = t.event_id)
+                     Buffers: shared hit=8
+         ->  Index Scan using venue_pkey on venue v  (cost=0.15..0.24 rows=1 width=40) (actual time=0.001..0.001 rows=1 loops=4)
+               Index Cond: (venue_id = e.venue_id)
+               Buffers: shared hit=8
+ Planning Time: 0.144 ms
+ Execution Time: 0.052 ms
+(33 rows)
+
+=== Q4. Scheduled events that are at least half sold (HAVING on an aggregate)
+ event_id |          title           | capacity | sold | percent_sold 
+----------+--------------------------+----------+------+--------------
+      204 | Acoustic Rooftop Session |        3 |    2 |         66.7
+(1 row)
+

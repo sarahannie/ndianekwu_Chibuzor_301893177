@@ -1,0 +1,68 @@
+            List of relations
+  Schema   |     Name     | Type  | Owner 
+-----------+--------------+-------+-------
+ portfolio | customer     | table | pg
+ portfolio | event        | table | pg
+ portfolio | ticket       | table | pg
+ portfolio | ticket_order | table | pg
+ portfolio | venue        | table | pg
+(5 rows)
+
+                           Table "portfolio.ticket"
+   Column   |           Type           | Collation | Nullable |    Default     
+------------+--------------------------+-----------+----------+----------------
+ ticket_id  | bigint                   |           | not null | 
+ order_id   | bigint                   |           | not null | 
+ event_id   | bigint                   |           | not null | 
+ seat_label | text                     |           |          | 
+ price      | numeric(10,2)            |           | not null | 
+ status     | text                     |           | not null | 'issued'::text
+ issued_at  | timestamp with time zone |           | not null | 
+Indexes:
+    "ticket_pkey" PRIMARY KEY, btree (ticket_id)
+    "idx_ticket_order" btree (order_id)
+    "ticket_seat_unique" UNIQUE, btree (event_id, seat_label) WHERE seat_label IS NOT NULL
+Check constraints:
+    "ticket_price_positive" CHECK (price > 0::numeric)
+    "ticket_status_valid" CHECK (status = ANY (ARRAY['issued'::text, 'used'::text, 'cancelled'::text]))
+Foreign-key constraints:
+    "fk_ticket_event" FOREIGN KEY (event_id) REFERENCES portfolio.event(event_id)
+    "fk_ticket_order" FOREIGN KEY (order_id) REFERENCES portfolio.ticket_order(order_id)
+
+                             Table "portfolio.event"
+  Column   |           Type           | Collation | Nullable |      Default      
+-----------+--------------------------+-----------+----------+-------------------
+ event_id  | bigint                   |           | not null | 
+ venue_id  | bigint                   |           | not null | 
+ title     | text                     |           | not null | 
+ starts_at | timestamp with time zone |           | not null | 
+ status    | text                     |           | not null | 'scheduled'::text
+ capacity  | integer                  |           | not null | 
+Indexes:
+    "event_pkey" PRIMARY KEY, btree (event_id)
+    "idx_event_venue_start" btree (venue_id, starts_at)
+Check constraints:
+    "event_capacity_positive" CHECK (capacity > 0)
+    "event_status_valid" CHECK (status = ANY (ARRAY['scheduled'::text, 'cancelled'::text, 'completed'::text]))
+Foreign-key constraints:
+    "fk_event_venue" FOREIGN KEY (venue_id) REFERENCES portfolio.venue(venue_id)
+Referenced by:
+    TABLE "portfolio.ticket" CONSTRAINT "fk_ticket_event" FOREIGN KEY (event_id) REFERENCES portfolio.event(event_id)
+
+                           Table "portfolio.ticket_order"
+     Column     |           Type           | Collation | Nullable |     Default     
+----------------+--------------------------+-----------+----------+-----------------
+ order_id       | bigint                   |           | not null | 
+ customer_id    | bigint                   |           | not null | 
+ placed_at      | timestamp with time zone |           | not null | 
+ payment_status | text                     |           | not null | 'pending'::text
+Indexes:
+    "ticket_order_pkey" PRIMARY KEY, btree (order_id)
+    "idx_order_customer" btree (customer_id)
+Check constraints:
+    "order_payment_status_valid" CHECK (payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'failed'::text, 'refunded'::text]))
+Foreign-key constraints:
+    "fk_order_customer" FOREIGN KEY (customer_id) REFERENCES portfolio.customer(customer_id)
+Referenced by:
+    TABLE "portfolio.ticket" CONSTRAINT "fk_ticket_order" FOREIGN KEY (order_id) REFERENCES portfolio.ticket_order(order_id)
+
