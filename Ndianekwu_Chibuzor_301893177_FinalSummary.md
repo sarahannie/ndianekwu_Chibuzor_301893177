@@ -50,7 +50,13 @@ Each portfolio folder holds the scripts, a README and an evidence folder with th
 
 ## Individual reflection
 
-[TO BE WRITTEN BY SARAH. Suggested points: why you chose ticketing; why seat_label is optional and how the partial unique index handles it; what surprised you in the overselling test; when you would pick a row lock over SERIALIZABLE; what the index test taught you about reading plans; what was hardest.]
+I chose an event ticketing platform because it is close to a product I am already building, ModelClic. ModelClic lets event organisers hire ushers, personal assistants and other support staff, for example 20 to 30 people to help serve food at an event. A ticketing platform is where organisers first register their events, so it is the natural place to later offer them staff from ModelClic. Working on this case study let me practise on the kind of data I will handle in my own product: events, venues, customers and orders.
+
+In the first concurrency test both buyers were given the last ticket, so the event was oversold. What I took from it is that the system must show that someone is already on that ticket before a second buyer is told it is free. The row lock does this: the first buyer holds the ticket and the second waits. If the first buyer does not complete the purchase, the ticket opens again for the next person; if it is sold, the second buyer sees that immediately. In the test the second buyer waited 1.99 seconds and was then told the event was full. I prefer the lock to the SERIALIZABLE approach, where one buyer's purchase is cancelled afterwards. Cancelling is a weak customer experience: if I have already told my boss the ticket is available and learn a minute later that it is gone, that damages trust in the business.
+
+The index test worked like looking for my own name in a phone book. Without an index the pages are in no order, so every page has to be read: PostgreSQL read all 60,046 tickets to find 200 and threw away 59,846, which took 7.083 ms on Neon. With the index there is an ordered list that points to the right pages, so it went straight to the 200 rows in 0.371 ms. That is why I will rely on indexes for the lookups my product runs most often. The test also showed two limits. An index is not always used: when a query wanted almost all the rows, PostgreSQL ignored it because reading everything was cheaper. And an index is not free: it takes storage, and every new ticket must also be added to it.
+
+[CHALLENGES: one or two sentences from Sarah on the hardest part of the assignment.]
 
 ## AI-use declaration
 
