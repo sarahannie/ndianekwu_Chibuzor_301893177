@@ -81,10 +81,6 @@ Requirements to rerun: PostgreSQL 16 with psql, bash, and mongosh (Portfolio 4 o
 | 4 | — | 10 MongoDB Atlas images |
 | 5 | — | 1 architecture diagram |
 
-## AI use
-
-The declaration is in the final summary: Claude (Anthropic) helped with the database model description and explanation. The author is responsible for checking the narration, the individual influence on the work and the rest of the submitted work.
-
 ## Known limits
 
 - Two PostgreSQL engines were used (16 locally, 18.7 on Neon); timings differ between them and are indicative only.
