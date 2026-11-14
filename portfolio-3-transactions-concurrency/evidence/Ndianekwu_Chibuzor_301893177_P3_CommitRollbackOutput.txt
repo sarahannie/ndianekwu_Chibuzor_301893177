@@ -1,0 +1,51 @@
+SET
+=== 1. COMMIT: an order and its two seats are saved together
+BEGIN
+INSERT 0 1
+INSERT 0 2
+COMMIT
+ order_id | payment_status | ticket_id | seat_label 
+----------+----------------+-----------+------------
+      350 | paid           |       450 | B1
+      350 | paid           |       451 | B2
+(2 rows)
+
+=== 2. ROLLBACK: seat A1 at event 200 is already sold, so the whole order must go
+BEGIN
+INSERT 0 1
+INSERT 0 1
+psql:Ndianekwu_Chibuzor_301893177_P3_Transactions.sql:27: ERROR:  23505: duplicate key value violates unique constraint "ticket_seat_unique"
+DETAIL:  Key (event_id, seat_label)=(200, A1) already exists.
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  ticket_seat_unique
+psql:Ndianekwu_Chibuzor_301893177_P3_Transactions.sql:29: ERROR:  25P02: current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+--- order 351 and ticket 452 should both be missing (0 rows each)
+ order_id 
+----------
+(0 rows)
+
+ ticket_id 
+-----------
+(0 rows)
+
+=== 3. SAVEPOINT: keep the order, undo only the failed seat
+BEGIN
+INSERT 0 1
+INSERT 0 1
+SAVEPOINT
+psql:Ndianekwu_Chibuzor_301893177_P3_Transactions.sql:44: ERROR:  23505: duplicate key value violates unique constraint "ticket_seat_unique"
+DETAIL:  Key (event_id, seat_label)=(200, A1) already exists.
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  ticket_seat_unique
+ROLLBACK
+INSERT 0 1
+COMMIT
+ order_id | ticket_id | seat_label 
+----------+-----------+------------
+      352 |       454 | B5
+      352 |       455 | B6
+(2 rows)
+

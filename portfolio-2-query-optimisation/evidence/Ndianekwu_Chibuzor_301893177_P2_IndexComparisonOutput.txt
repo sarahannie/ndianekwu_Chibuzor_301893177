@@ -1,0 +1,132 @@
+SET
+BEGIN
+INSERT 0 300
+INSERT 0 3000
+INSERT 0 60000
+ANALYZE
+ ticket_rows 
+-------------
+       60046
+(1 row)
+
+=== BEFORE the index: result, then three measured runs
+ tickets_sold | revenue_naira 
+--------------+---------------
+          200 |    1500000.00
+(1 row)
+
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1463.67..1463.68 rows=1 width=40) (actual time=3.661..3.661 rows=1 loops=1)
+   Buffers: shared hit=562
+   ->  Seq Scan on ticket  (cost=0.00..1462.69 rows=196 width=5) (actual time=0.009..3.637 rows=200 loops=1)
+         Filter: ((status = ANY ('{issued,used}'::text[])) AND (event_id = 1042))
+         Rows Removed by Filter: 59846
+         Buffers: shared hit=562
+ Planning Time: 0.048 ms
+ Execution Time: 3.675 ms
+(8 rows)
+
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1463.67..1463.68 rows=1 width=40) (actual time=3.438..3.439 rows=1 loops=1)
+   Buffers: shared hit=562
+   ->  Seq Scan on ticket  (cost=0.00..1462.69 rows=196 width=5) (actual time=0.009..3.416 rows=200 loops=1)
+         Filter: ((status = ANY ('{issued,used}'::text[])) AND (event_id = 1042))
+         Rows Removed by Filter: 59846
+         Buffers: shared hit=562
+ Planning Time: 0.046 ms
+ Execution Time: 3.450 ms
+(8 rows)
+
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1463.67..1463.68 rows=1 width=40) (actual time=3.443..3.444 rows=1 loops=1)
+   Buffers: shared hit=562
+   ->  Seq Scan on ticket  (cost=0.00..1462.69 rows=196 width=5) (actual time=0.010..3.419 rows=200 loops=1)
+         Filter: ((status = ANY ('{issued,used}'::text[])) AND (event_id = 1042))
+         Rows Removed by Filter: 59846
+         Buffers: shared hit=562
+ Planning Time: 0.040 ms
+ Execution Time: 3.454 ms
+(8 rows)
+
+CREATE INDEX
+ANALYZE
+=== AFTER the index: same query, same result, three measured runs
+ tickets_sold | revenue_naira 
+--------------+---------------
+          200 |    1500000.00
+(1 row)
+
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=404.60..404.61 rows=1 width=40) (actual time=0.117..0.117 rows=1 loops=1)
+   Buffers: shared hit=203
+   ->  Bitmap Heap Scan on ticket  (cost=5.80..403.62 rows=195 width=5) (actual time=0.021..0.101 rows=200 loops=1)
+         Recheck Cond: (event_id = 1042)
+         Filter: (status = ANY ('{issued,used}'::text[]))
+         Heap Blocks: exact=200
+         Buffers: shared hit=203
+         ->  Bitmap Index Scan on idx_ticket_event  (cost=0.00..5.75 rows=195 width=0) (actual time=0.007..0.008 rows=200 loops=1)
+               Index Cond: (event_id = 1042)
+               Buffers: shared hit=3
+ Planning Time: 0.037 ms
+ Execution Time: 0.128 ms
+(12 rows)
+
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=404.60..404.61 rows=1 width=40) (actual time=0.103..0.103 rows=1 loops=1)
+   Buffers: shared hit=203
+   ->  Bitmap Heap Scan on ticket  (cost=5.80..403.62 rows=195 width=5) (actual time=0.019..0.088 rows=200 loops=1)
+         Recheck Cond: (event_id = 1042)
+         Filter: (status = ANY ('{issued,used}'::text[]))
+         Heap Blocks: exact=200
+         Buffers: shared hit=203
+         ->  Bitmap Index Scan on idx_ticket_event  (cost=0.00..5.75 rows=195 width=0) (actual time=0.006..0.006 rows=200 loops=1)
+               Index Cond: (event_id = 1042)
+               Buffers: shared hit=3
+ Planning Time: 0.026 ms
+ Execution Time: 0.111 ms
+(12 rows)
+
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=404.60..404.61 rows=1 width=40) (actual time=0.123..0.123 rows=1 loops=1)
+   Buffers: shared hit=203
+   ->  Bitmap Heap Scan on ticket  (cost=5.80..403.62 rows=195 width=5) (actual time=0.018..0.107 rows=200 loops=1)
+         Recheck Cond: (event_id = 1042)
+         Filter: (status = ANY ('{issued,used}'::text[]))
+         Heap Blocks: exact=200
+         Buffers: shared hit=203
+         ->  Bitmap Index Scan on idx_ticket_event  (cost=0.00..5.75 rows=195 width=0) (actual time=0.006..0.006 rows=200 loops=1)
+               Index Cond: (event_id = 1042)
+               Buffers: shared hit=3
+ Planning Time: 0.020 ms
+ Execution Time: 0.130 ms
+(12 rows)
+
+=== A query the index does not help: most rows match, so the planner keeps the sequential scan
+                                                   QUERY PLAN                                                    
+-----------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1457.62..1457.63 rows=1 width=8) (actual time=6.464..6.465 rows=1 loops=1)
+   Buffers: shared hit=562
+   ->  Seq Scan on ticket  (cost=0.00..1312.58 rows=58017 width=0) (actual time=0.007..4.209 rows=58000 loops=1)
+         Filter: (event_id > 1010)
+         Rows Removed by Filter: 2046
+         Buffers: shared hit=562
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.028 ms
+ Execution Time: 6.473 ms
+(10 rows)
+
+=== Size of the new index
+ index_size | table_size 
+------------+------------
+ 416 kB     | 4496 kB
+(1 row)
+
+ROLLBACK
+CREATE INDEX

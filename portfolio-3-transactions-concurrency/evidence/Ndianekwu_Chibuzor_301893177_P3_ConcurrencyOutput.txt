@@ -1,0 +1,146 @@
+##### Starting state of event 204
+ capacity | tickets_issued | result 
+----------+----------------+--------
+        3 |              2 | ok
+(1 row)
+
+
+##### TEST 1: READ COMMITTED, check then insert, no lock
+----- Session A output
+ session  |      at      |         step          
+----------+--------------+-----------------------
+ SessionA | 05:06:03.211 | counting sold tickets
+(1 row)
+
+SessionA sees sold = 2 , capacity = 3 , seat_free = t
+SessionA inserted ticket 460 (not committed yet)
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionA | 05:06:06.217 | finished
+(1 row)
+
+----- Session B output
+ session  |      at      |         step          
+----------+--------------+-----------------------
+ SessionB | 05:06:04.194 | counting sold tickets
+(1 row)
+
+SessionB sees sold = 2 , capacity = 3 , seat_free = t
+SessionB inserted ticket 461 (not committed yet)
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionB | 05:06:04.197 | finished
+(1 row)
+
+----- State after test 1
+ capacity | tickets_issued |  result  
+----------+----------------+----------
+        3 |              4 | OVERSOLD
+(1 row)
+
+
+##### TEST 2: READ COMMITTED with SELECT ... FOR UPDATE on the event row
+----- Session A output
+ session  |      at      |             step              
+----------+--------------+-------------------------------
+ SessionA | 05:06:06.289 | asking for the event row lock
+(1 row)
+
+ session  |      at      |     step     
+----------+--------------+--------------
+ SessionA | 05:06:06.290 | got the lock
+(1 row)
+
+SessionA sees sold = 2 , capacity = 3 , seat_free = t
+SessionA inserted ticket 460 (not committed yet)
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionA | 05:06:09.295 | finished
+(1 row)
+
+----- Session B output
+ session  |      at      |             step              
+----------+--------------+-------------------------------
+ SessionB | 05:06:07.305 | asking for the event row lock
+(1 row)
+
+ session  |      at      |     step     
+----------+--------------+--------------
+ SessionB | 05:06:09.295 | got the lock
+(1 row)
+
+SessionB sees sold = 3 , capacity = 3 , seat_free = f
+SessionB found the event full and bought nothing
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionB | 05:06:09.298 | finished
+(1 row)
+
+----- State after test 2
+ capacity | tickets_issued | result 
+----------+----------------+--------
+        3 |              3 | ok
+(1 row)
+
+
+##### TEST 3: SERIALIZABLE, check then insert, no explicit lock
+----- Session A output
+ session  |      at      |         step          
+----------+--------------+-----------------------
+ SessionA | 05:06:09.378 | counting sold tickets
+(1 row)
+
+SessionA sees sold = 2 , capacity = 3 , seat_free = t
+SessionA inserted ticket 460 (not committed yet)
+ pg_sleep 
+----------
+ 
+(1 row)
+
+psql:Ndianekwu_Chibuzor_301893177_P3_BuyLastTicket_NoLock.sql:22: ERROR:  40001: could not serialize access due to read/write dependencies among transactions
+DETAIL:  Reason code: Canceled on identification as a pivot, during commit attempt.
+HINT:  The transaction might succeed if retried.
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionA | 05:06:12.384 | finished
+(1 row)
+
+----- Session B output
+ session  |      at      |         step          
+----------+--------------+-----------------------
+ SessionB | 05:06:10.380 | counting sold tickets
+(1 row)
+
+SessionB sees sold = 2 , capacity = 3 , seat_free = t
+SessionB inserted ticket 461 (not committed yet)
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ session  |      at      |   step   
+----------+--------------+----------
+ SessionB | 05:06:10.383 | finished
+(1 row)
+
+----- State after test 3
+ capacity | tickets_issued | result 
+----------+----------------+--------
+        3 |              3 | ok
+(1 row)
+

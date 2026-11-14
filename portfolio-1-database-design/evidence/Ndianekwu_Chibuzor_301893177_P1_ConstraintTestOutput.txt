@@ -1,0 +1,108 @@
+SET
+--- row counts before the tests
+ customer | venue | event | ticket_order | ticket 
+----------+-------+-------+--------------+--------
+       12 |     5 |     8 |           24 |     46
+(1 row)
+
+--- 1. duplicate primary key (venue 100 exists)
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:12: ERROR:  23505: duplicate key value violates unique constraint "venue_pkey"
+DETAIL:  Key (venue_id)=(100) already exists.
+SCHEMA NAME:  portfolio
+TABLE NAME:  venue
+CONSTRAINT NAME:  venue_pkey
+--- 2. duplicate customer email
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:15: ERROR:  23505: duplicate key value violates unique constraint "customer_email_unique"
+DETAIL:  Key (email)=(adaeze.okonkwo@example.test) already exists.
+SCHEMA NAME:  portfolio
+TABLE NAME:  customer
+CONSTRAINT NAME:  customer_email_unique
+--- 3. event for a venue that does not exist
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:18: ERROR:  23503: insert or update on table "event" violates foreign key constraint "fk_event_venue"
+DETAIL:  Key (venue_id)=(999) is not present in table "venue".
+SCHEMA NAME:  portfolio
+TABLE NAME:  event
+CONSTRAINT NAME:  fk_event_venue
+--- 4. order for a customer that does not exist
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:21: ERROR:  23503: insert or update on table "ticket_order" violates foreign key constraint "fk_order_customer"
+DETAIL:  Key (customer_id)=(999) is not present in table "customer".
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket_order
+CONSTRAINT NAME:  fk_order_customer
+--- 5. ticket for an order that does not exist
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:24: ERROR:  23503: insert or update on table "ticket" violates foreign key constraint "fk_ticket_order"
+DETAIL:  Key (order_id)=(999) is not present in table "ticket_order".
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  fk_ticket_order
+--- 6. ticket for an event that does not exist
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:27: ERROR:  23503: insert or update on table "ticket" violates foreign key constraint "fk_ticket_event"
+DETAIL:  Key (event_id)=(999) is not present in table "event".
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  fk_ticket_event
+--- 7. venue with zero capacity
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:30: ERROR:  23514: new row for relation "venue" violates check constraint "venue_capacity_positive"
+DETAIL:  Failing row contains (150, Empty Room, Lagos, 0).
+SCHEMA NAME:  portfolio
+TABLE NAME:  venue
+CONSTRAINT NAME:  venue_capacity_positive
+--- 8. event with negative capacity
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:33: ERROR:  23514: new row for relation "event" violates check constraint "event_capacity_positive"
+DETAIL:  Failing row contains (251, 100, Minus Show, 2026-12-30 19:00:00+01, scheduled, -5).
+SCHEMA NAME:  portfolio
+TABLE NAME:  event
+CONSTRAINT NAME:  event_capacity_positive
+--- 9. free ticket (price must be above zero)
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:36: ERROR:  23514: new row for relation "ticket" violates check constraint "ticket_price_positive"
+DETAIL:  Failing row contains (492, 300, 200, null, 0.00, issued, 2026-11-14 10:00:00+01).
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  ticket_price_positive
+--- 10. seat A1 at event 200 is already sold
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:39: ERROR:  23505: duplicate key value violates unique constraint "ticket_seat_unique"
+DETAIL:  Key (event_id, seat_label)=(200, A1) already exists.
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  ticket_seat_unique
+--- 11. event status outside the allowed list
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:42: ERROR:  23514: new row for relation "event" violates check constraint "event_status_valid"
+DETAIL:  Failing row contains (252, 100, Maybe Show, 2026-12-30 19:00:00+01, postponed, 100).
+SCHEMA NAME:  portfolio
+TABLE NAME:  event
+CONSTRAINT NAME:  event_status_valid
+--- 12. payment status outside the allowed list
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:45: ERROR:  23514: new row for relation "ticket_order" violates check constraint "order_payment_status_valid"
+DETAIL:  Failing row contains (391, 1, 2026-11-14 10:00:00+01, unknown).
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket_order
+CONSTRAINT NAME:  order_payment_status_valid
+--- 13. ticket status outside the allowed list
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:48: ERROR:  23514: new row for relation "ticket" violates check constraint "ticket_status_valid"
+DETAIL:  Failing row contains (494, 300, 200, null, 15000.00, lost, 2026-11-14 10:00:00+01).
+SCHEMA NAME:  portfolio
+TABLE NAME:  ticket
+CONSTRAINT NAME:  ticket_status_valid
+--- 14. venue without a name
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:51: ERROR:  23502: null value in column "name" of relation "venue" violates not-null constraint
+DETAIL:  Failing row contains (151, null, Lagos, 100).
+SCHEMA NAME:  portfolio
+TABLE NAME:  venue
+COLUMN NAME:  name
+--- 15. deleting a venue that still has events
+psql:Ndianekwu_Chibuzor_301893177_P1_ConstraintTests.sql:54: ERROR:  23503: update or delete on table "venue" violates foreign key constraint "fk_event_venue" on table "event"
+DETAIL:  Key (venue_id)=(100) is still referenced from table "event".
+SCHEMA NAME:  portfolio
+TABLE NAME:  event
+CONSTRAINT NAME:  fk_event_venue
+--- allowed: two general admission tickets (NULL seat) for the same event
+BEGIN
+INSERT 0 1
+INSERT 0 1
+ROLLBACK
+--- row counts after the tests (should match the first table)
+ customer | venue | event | ticket_order | ticket 
+----------+-------+-------+--------------+--------
+       12 |     5 |     8 |           24 |     46
+(1 row)
+
