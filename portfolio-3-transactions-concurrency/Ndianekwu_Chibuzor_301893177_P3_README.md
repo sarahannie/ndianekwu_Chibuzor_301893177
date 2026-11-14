@@ -52,6 +52,17 @@ No lock was requested. PostgreSQL tracked that each transaction read the rows th
 | Application code | must remember to lock | must retry on 40001 |
 | Fits | on-sale rush for a popular event | mostly quiet sales with rare collisions |
 
+## Second run on a hosted database
+
+The rollback test was repeated on Neon PostgreSQL 18.7 (web SQL editor, 14 November 2026).
+
+| Step | Result | Screenshot |
+| --- | --- | --- |
+| Order 351 with seat B5 and sold seat A1 in one transaction | BEGIN, INSERT 1, INSERT 1, then ERROR 23505; the editor reported "Failed transaction: ROLLBACK required" | [01](screenshots/Ndianekwu_Chibuzor_301893177_P3_01_FailedTransaction_Neon.jpg) |
+| After ROLLBACK | order 351: 0 rows; its tickets: 0 rows; tickets still 46 | [02](screenshots/Ndianekwu_Chibuzor_301893177_P3_02_AfterRollback_Neon.jpg) |
+
+The two-buyer tests in Part 2 need two connections open at the same moment. A web SQL editor provides one, so Part 2 was run only with psql on PostgreSQL 16, and its evidence is the saved output file.
+
 ## Run
 
 ```bash

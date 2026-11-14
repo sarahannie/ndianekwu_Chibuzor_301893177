@@ -55,6 +55,20 @@ WHERE event_id = 1042 AND status IN ('issued', 'used');
 - Cost: the index took 416 kB next to a 4,496 kB table, and every ticket insert must now update it as well.
 - The timings come from one machine with all data in memory. They show the direction and scale, not fixed values.
 
+## Second run on a hosted database
+
+The revenue query and the index test were repeated on Neon PostgreSQL 18.7 (web SQL editor, 14 November 2026). Each test loaded the same 60,000 extra tickets inside a transaction and rolled it back.
+
+| | Before index | After index |
+| --- | --- | --- |
+| Plan | Seq Scan on ticket | Bitmap Index Scan, then Bitmap Heap Scan |
+| Rows read and discarded | 59,846 | 0 |
+| Buffers | 562 | 206 (203 hit, 3 read) |
+| Execution time (one run each) | 7.083 ms | 0.371 ms |
+| Screenshot | [02](screenshots/Ndianekwu_Chibuzor_301893177_P2_02_Plan_BeforeIndex_SeqScan_Neon.jpg) | [03](screenshots/Ndianekwu_Chibuzor_301893177_P2_03_Plan_AfterIndex_BitmapScan_Neon.jpg) |
+
+The plans and page counts match the local PostgreSQL 16 run. The times differ because it is a different machine, and here each side was measured once, not three times. The revenue query returned the same eight rows ([01](screenshots/Ndianekwu_Chibuzor_301893177_P2_01_RevenuePerEvent_Neon.jpg)).
+
 ## Run
 
 ```bash

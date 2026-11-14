@@ -25,7 +25,7 @@ All names, emails and amounts are invented. Prices are in naira.
 | [portfolio-4-nosql](portfolio-4-nosql/) | Ticket activity log as documents | MongoDB |
 | [portfolio-5-distributed-cloud](portfolio-5-distributed-cloud/) | Replication, consistency, sharding and deployment discussion | MongoDB / PostgreSQL |
 
-Each folder has its own README. Files in each `evidence/` folder are the unedited output of the scripts.
+Each folder has its own README. Files in each `evidence/` folder are the unedited psql output from a local PostgreSQL 16 run. Files in each `screenshots/` folder are from MongoDB Atlas and from a Neon PostgreSQL 18.7 database.
 
 ## Run everything
 

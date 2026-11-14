@@ -24,6 +24,15 @@ The schema and sample data were loaded into an empty PostgreSQL 16 database. The
 | Two general admission tickets (NULL seat) for one event | accepted, as intended |
 | Row counts before and after | unchanged: 12, 5, 8, 24, 46 |
 
+## Second run on a hosted database
+
+The schema and sample data were also loaded into a Neon PostgreSQL 18.7 database through its web SQL editor on 14 November 2026.
+
+| Check | Result | Screenshot |
+| --- | --- | --- |
+| Row counts | 12, 5, 8, 24, 46 (same as the local run) | [01](screenshots/Ndianekwu_Chibuzor_301893177_P1_01_RowCounts_Neon.jpg) |
+| Second ticket for seat A1 at event 200 | rejected, SQLSTATE 23505 on ticket_seat_unique | [02](screenshots/Ndianekwu_Chibuzor_301893177_P1_02_DuplicateSeatRejected_Neon.jpg) |
+
 ## Run
 
 ```bash

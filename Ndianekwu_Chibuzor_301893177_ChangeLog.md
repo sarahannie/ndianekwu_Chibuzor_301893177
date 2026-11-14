@@ -63,6 +63,6 @@ Each entry says what changed and why.
 
 - Individual reflection in the final summary: to be written by the student.
 - AI-use declaration: left as it was. It does not mention this review.
-- PostgreSQL screenshots from the student's own machine (MongoDB screenshots are done).
+- Screenshots: done for MongoDB (Atlas) and for PostgreSQL (Neon, PostgreSQL 18.7). The two-session concurrency test has text output only.
 - Timings in Portfolio 2 and timestamps in Portfolio 3 come from the review machine (PostgreSQL 16.15); they will differ on another computer.
 - The brief asks for a private repository that the assessor can open.
