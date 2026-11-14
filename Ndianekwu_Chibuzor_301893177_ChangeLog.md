@@ -9,7 +9,7 @@ Each entry says what changed and why.
 | Every file renamed from `ndianekwu_...` to `Ndianekwu_...` | the submission format is Surname_Firstname_StudentID with a capital surname |
 | Root README rewritten | the brief asks for the organisation, nature of the system, users, data and operations at the start, plus how the work is run |
 | Rendered summary images removed from P1 to P4 | they showed the old one-row results; unedited psql output is now in each `evidence/` folder |
-| Final summary PDF removed | it was 4 pages (limit 3) and described the old work; regenerate it from the updated summary |
+| Final summary PDF rebuilt (2 pages) | the old one was 4 pages (limit 3) and described the old work |
 
 ## Portfolio 1
 
@@ -61,7 +61,7 @@ Each entry says what changed and why.
 
 ## Still open
 
-- Individual reflection in the final summary: to be written by the student.
+- Individual reflection: written from the student's own answers on 14 November 2026.
 - AI-use declaration: left as it was. It does not mention this review.
 - Screenshots: done for MongoDB (Atlas) and for PostgreSQL (Neon, PostgreSQL 18.7). The two-session concurrency test has text output only.
 - Timings in Portfolio 2 and timestamps in Portfolio 3 come from the review machine (PostgreSQL 16.15); they will differ on another computer.

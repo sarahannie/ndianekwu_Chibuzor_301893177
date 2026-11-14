@@ -46,4 +46,5 @@ Run the scripts in this order on an empty database. Portfolio 3 adds orders, so 
 ## Documents
 
 - [Final summary](Ndianekwu_Chibuzor_301893177_FinalSummary.md)
+- [Final summary (PDF)](Ndianekwu_Chibuzor_301893177_FinalSummary.pdf)
 - [Change log](Ndianekwu_Chibuzor_301893177_ChangeLog.md)
