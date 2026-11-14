@@ -3,7 +3,7 @@
 | File | Content |
 | --- | --- |
 | [MongoDB script](Ndianekwu_Chibuzor_301893177_P4_MongoDB.js) | collection, validator, 6 documents, indexes, 6 queries, 3 validation tests |
-| evidence/ | mongosh output of the script (see "Evidence" below) |
+| screenshots/ | ten Atlas Data Explorer screenshots, numbered in the order of the steps below |
 
 ## What is stored
 
@@ -53,26 +53,33 @@ The IDs, names and prices are the same as orders 300, 302 and 315 in the Postgre
 
 It does not replace PostgreSQL. Seat uniqueness, foreign keys and the capacity check need constraints and multi-row transactions, which stay in the relational database.
 
-## Queries in the script
+## How it was implemented and tested
 
-| # | Query | MongoDB feature | Expected documents |
+The collection was built on a MongoDB Atlas free cluster (MongoDB 8.0) on 14 November 2026, using the Atlas Data Explorer in the browser: validation rule first, then the six documents, then the queries. The [script](Ndianekwu_Chibuzor_301893177_P4_MongoDB.js) holds the same steps for mongosh; the results below are from the Atlas run.
+
+| Step | What was done | Result | Evidence |
 | --- | --- | --- | --- |
-| Q1 | Timeline of order 300 | dot notation on an embedded field, sort | 3 |
-| Q2 | Activity in November 2026 | date range on a BSON Date | 5 |
-| Q3 | Entries involving seat A1 | $elemMatch on an array | 2 |
-| Q4 | Tickets issued and value per event | $match, $unwind, $group, $sort | 2 groups |
-| Q5 | Entries per type | $group | 4 groups |
-| Q6 | Plan for Q1 | explain("executionStats") | IXSCAN on order_timeline |
+| 1 | Validation rule applied (action: error, level: strict) | accepted | [01](screenshots/Ndianekwu_Chibuzor_301893177_P4_01_ValidationRule.jpg) |
+| 2 | Six documents inserted | 6 documents, dates stored as BSON Date | [02](screenshots/Ndianekwu_Chibuzor_301893177_P4_02_SixDocumentsInserted.jpg) |
+| 3 | Q1: `{ "order.order_id": 300 }` (dot notation into an embedded document) | 3 documents | [03](screenshots/Ndianekwu_Chibuzor_301893177_P4_03_Q1_OrderTimeline.jpg) |
+| 4 | Explain Q1 with no index | COLLSCAN, 6 documents examined, 0 index keys | [04](screenshots/Ndianekwu_Chibuzor_301893177_P4_04_Explain_BeforeIndex_COLLSCAN.jpg) |
+| 5 | Compound index on `order.order_id` (asc), `occurredAt` (asc) | index ready | [05](screenshots/Ndianekwu_Chibuzor_301893177_P4_05_IndexCreated.jpg) |
+| 6 | Explain Q1 again | IXSCAN then FETCH, 3 keys and 3 documents examined | [06](screenshots/Ndianekwu_Chibuzor_301893177_P4_06_Explain_AfterIndex_IXSCAN.jpg) |
+| 7 | Q3: `{ tickets: { $elemMatch: { seat_label: "A1" } } }` (match inside an array) | 2 documents: evt-0002, evt-0005 | [07](screenshots/Ndianekwu_Chibuzor_301893177_P4_07_Q3_SeatA1_ElemMatch.jpg) |
+| 8 | Q2: `occurredAt` from 1 Nov to 1 Dec 2026 (date range) | 5 documents | [08](screenshots/Ndianekwu_Chibuzor_301893177_P4_08_Q2_NovemberDateRange.jpg) |
+| 9 | Insert a document whose `occurredAt` is the text "2026-11-05" | refused: "Document failed validation" | [09](screenshots/Ndianekwu_Chibuzor_301893177_P4_09_ValidationRejected.jpg) |
+| 10 | Q4: `$match`, `$unwind`, `$group`, `$sort` | Afrobeats Live: 4 tickets, 100,000; Lagos Jazz Night: 2 tickets, 30,000 | [10](screenshots/Ndianekwu_Chibuzor_301893177_P4_10_Q4_Aggregation.jpg) |
 
-Validation tests: a text value in `occurredAt` and an unknown `eventType` should be rejected with code 121; a repeated `_id` with code 11000. The collection should still hold 6 documents.
+### What the results show
 
-## Evidence
+- Before the index MongoDB read every document to find order 300. After it, the documents examined equal the documents returned, so no work is wasted. With six documents both take 0 ms; the ratio is what matters as the log grows.
+- The index starts with `order.order_id` and continues with `occurredAt`, so it also returns an order's entries already in time order.
+- Q4's totals match PostgreSQL: order 302 has four tickets at 25,000 and order 300 has two at 15,000.
+- The validator caught a wrong type on a common field. It would not catch a mistake inside `details`, which is free-form by design.
 
-The "expected" column above is worked out from the six sample documents. The script output must be captured by running:
+### Not run on Atlas
 
-```bash
-mongosh --file Ndianekwu_Chibuzor_301893177_P4_MongoDB.js > evidence/Ndianekwu_Chibuzor_301893177_P4_MongoOutput.txt
-```
+The script also contains a count per event type (Q5), a second index on `eventType` and `occurredAt`, and two more rejection tests (unknown event type, repeated `_id`). These were not executed in the Atlas session.
 
 ## Reference
 

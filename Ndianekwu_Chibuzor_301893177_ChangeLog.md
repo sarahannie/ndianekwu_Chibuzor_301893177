@@ -50,7 +50,7 @@ Each entry says what changed and why.
 | Six documents of four types, dated 2026, matching SQL orders 300, 302, 315 | the old data had two near-identical documents dated 2030, and `order_placed` pointed at a ticket |
 | Array query, aggregation with $unwind, and an explain() check added | uses features specific to the document model |
 | Comment "four example events" corrected | the script inserted two |
-| **Not yet run**: no MongoDB server was available during the review | run the script in mongosh and save the output into `evidence/` |
+| Built and tested on MongoDB Atlas through the Data Explorer, with ten screenshots | gives real implementation evidence; three script steps (Q5, second index, two extra rejection tests) were not run |
 
 ## Portfolio 5
 
@@ -63,6 +63,6 @@ Each entry says what changed and why.
 
 - Individual reflection in the final summary: to be written by the student.
 - AI-use declaration: left as it was. It does not mention this review.
-- MongoDB output and real screenshots from the student's own machine.
+- PostgreSQL screenshots from the student's own machine (MongoDB screenshots are done).
 - Timings in Portfolio 2 and timestamps in Portfolio 3 come from the review machine (PostgreSQL 16.15); they will differ on another computer.
 - The brief asks for a private repository that the assessor can open.

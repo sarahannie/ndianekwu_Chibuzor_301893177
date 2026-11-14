@@ -38,7 +38,7 @@ An order with two seats committed as one unit. An order containing an already so
 
 ## Portfolio 4: NoSQL and Advanced Data Models
 
-A MongoDB collection, ticket_events, logs four kinds of activity (order placed, ticket issued, ticket scanned, order refunded). Customer, event and venue details are embedded so one read shows a full entry, and a details sub-document differs by type. A JSON Schema validator fixes the common fields. Two indexes support the order timeline and recent-activity reads. PostgreSQL stays the owner of current data and of the rules that need constraints.
+A MongoDB collection, ticket_events, logs four kinds of activity (order placed, ticket issued, ticket scanned, order refunded). Customer, event and venue details are embedded so one read shows a full entry, and a details sub-document differs by type. A JSON Schema validator fixes the common fields. It was built and tested on a MongoDB Atlas free cluster: six documents inserted, a text date rejected by the validator, and the order-timeline query moved from COLLSCAN (6 documents examined) to IXSCAN (3 examined) after a compound index on order.order_id and occurredAt. PostgreSQL stays the owner of current data and of the rules that need constraints.
 
 ## Portfolio 5: Distributed and Cloud Database Exercise
 
